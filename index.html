@@ -3,74 +3,47 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>实验室工具集 · Panta</title>
-<meta name="description" content="蛋白稳定性与 buffer 配方相关的小工具集合：快速筛选、趋势看板、参数探索。">
+<title>实验室工具集</title>
 <link rel="stylesheet" href="assets/site.css">
 </head>
 <body>
 
 <div class="top">
   <div class="inner">
-    <div class="mark"><i></i>Panta · Lab Tools</div>
+    <div class="mark"><i></i>Lab Tools</div>
     <h1>实验室工具集</h1>
-    <div class="lead">围绕蛋白稳定性与 buffer 配方的小工具。全部纯前端运行，数据不上传，打开即用。</div>
-    <div class="chips">
-      <span class="chip"><b id="cntS1">1</b> 可用工具</span>
-      <span class="chip"><b>23</b> 标定样本</span>
-      <span class="chip">排序 ρ <b class="num">0.70 / 0.64</b></span>
-      <span class="chip"><b>0</b> 依赖 · 纯静态</span>
-    </div>
+    <div class="lead">内部工具页面集合。每个工具是独立静态页，无需安装，数据不上传。</div>
   </div>
 </div>
 
 <div class="shell">
 
-  <div class="search">
-    <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4 4"/></svg>
-    <input id="q" type="text" placeholder="搜索工具、参数或标签…" autocomplete="off" aria-label="搜索工具">
-    <button class="clr" id="clr" aria-label="清空" style="display:none">×</button>
-    <kbd>/</kbd>
-  </div>
-
   <div id="sectLive">
     <div class="sect-hd">
       <h2>工具</h2>
-      <span class="cnt" id="cntLive">1 个</span>
+      <span class="cnt" id="cntLive"></span>
       <span class="line"></span>
     </div>
-    <div class="grid" id="gridLive"></div>
+    <div class="list" id="gridLive"></div>
   </div>
 
-  <div id="sectSoon" style="margin-top:30px">
+  <div id="sectDocs" style="margin-top:32px">
     <div class="sect-hd">
-      <h2>规划中</h2>
-      <span class="cnt" id="cntSoon">3 个</span>
+      <h2>资料</h2>
       <span class="line"></span>
     </div>
-    <div class="grid" id="gridSoon"></div>
+    <div class="doclist" id="docList"></div>
   </div>
-
-  <div class="empty-result" id="noResult" style="display:none">
-    没有匹配的工具。<b>换个关键词</b>，或直接打开 Buffer 快速筛选。
-  </div>
-
-  <div class="sect-hd" style="margin-top:34px">
-    <h2>资料</h2>
-    <span class="line"></span>
-  </div>
-  <div class="docs" id="docList"></div>
 
   <div class="note">
-    <div class="hd">新增工具 <span class="k">assets/tools.js</span></div>
-    页面放进 <code>tools/</code>，在 <code>TOOLS</code> 数组里加一条记录，首页自动出现新卡片 —— 不需要改 HTML。<br>
-    工具页顶部加一条返回导航即可与工具集打通，参考 <code>tools/buffer-screening.html</code> 的 <code>.toolbar</code>。<br>
-    共享样式在 <code>assets/site.css</code>（颜色、字号、卡片、标签），新页面直接引用可保持视觉一致。
+    <div class="hd">添加工具 <span class="k">assets/tools.js</span></div>
+    页面放到 <code>tools/</code>，在 <code>TOOLS</code> 数组里登记一条，首页会自动生成卡片。
   </div>
 
 </div>
 
 <footer>
-  <span>Panta · 蛋白稳定性工具集</span>
+  <span>实验室工具集</span>
   <span class="sep">/</span>
   <span>2026-10</span>
   <span class="sep">/</span>

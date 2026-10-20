@@ -1,6 +1,6 @@
-# 实验室工具集（Panta）
+# 实验室工具集
 
-围绕蛋白稳定性与 buffer 配方的纯前端小工具集合。首页是工具目录，每个工具是 `tools/` 下的独立单页，互不依赖。
+内部工具页面集合。首页是工具目录，每个工具是 `tools/` 下的独立静态页，浏览器直接打开即可用，互不依赖。
 
 **在线站点：https://jachinhu.github.io/buffer-screening-model/**
 
@@ -8,12 +8,9 @@
 
 ## 工具
 
-| 工具 | 路径 | 状态 |
-|---|---|---|
-| Buffer 快速筛选 | `tools/buffer-screening.html` | 可用 |
-| 非特异性趋势看板 | — | 规划中 |
-| 参数相关性探索 | — | 规划中 |
-| 配方浓度换算 | — | 规划中 |
+| 工具 | 路径 |
+|---|---|
+| Buffer 快速筛选 | `tools/buffer-screening.html` |
 
 ### Buffer 快速筛选
 
@@ -60,7 +57,7 @@
 ## 文件
 
 ```
-index.html                     工具集首页（目录 + 搜索，卡片由注册表渲染）
+index.html                     工具集首页（列表由注册表渲染）
 assets/site.css                共享样式：配色、字号、卡片、标签、工具页返回条
 assets/tools.js                工具注册表 TOOLS[]，新增工具只改这里
 tools/buffer-screening.html    Buffer 快速筛选（单文件，纯前端，可离线打开）
@@ -92,7 +89,7 @@ scripts/extend_study.py        bridge study：新指标纳入判据评估
 }
 ```
 
-3. 提交推送，首页自动出现卡片。HTML 不用改，`counts`、搜索索引、排序都会跟着更新。
+3. 提交推送，首页自动出现一行。HTML 不用改。
 
 样式统一引用 `assets/site.css` 里的变量（`--accent`、`--line`、`--muted`…），不要另起一套配色。
 
