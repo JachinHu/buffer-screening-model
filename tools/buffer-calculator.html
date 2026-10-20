@@ -1,0 +1,1008 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="../assets/site.css">
+<title>Buffer 配方计算器 · 实验室工具集</title>
+<style>
+  :root{
+    --bg:#f4f6f8; --card:#ffffff; --ink:#1a2332; --sub:#5b6b7c;
+    --line:#e3e8ee; --accent:#0e7490; --accent-soft:#e0f2f7;
+    --warn-bg:#fff7ed; --warn-ink:#9a3412; --ok:#047857;
+    --mono:ui-monospace,'SF Mono',Consolas,'Cascadia Mono',monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--ink);
+    font-family:-apple-system,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;
+    line-height:1.55;padding:0}
+  .wrap{max-width:980px;margin:0 auto;padding:22px 16px 56px}
+  header{margin-bottom:20px}
+  h1{font-size:22px;font-weight:700;letter-spacing:.5px}
+  header p{color:var(--sub);font-size:13px;margin-top:4px}
+  /* Tabs */
+  .tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:18px}
+  .tab{padding:8px 18px;border-radius:999px;border:1px solid var(--line);
+    background:var(--card);color:var(--sub);font-size:14px;cursor:pointer;user-select:none}
+  .tab.on{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+  section.tabpane{display:none}
+  section.tabpane.on{display:block}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;
+    padding:20px 22px;margin-bottom:16px}
+  .card h2{font-size:15px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+  .card h2 .dot{width:8px;height:8px;border-radius:50%;background:var(--accent)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px}
+  .field label{display:block;font-size:12px;color:var(--sub);margin-bottom:4px}
+  .field input,.field select{width:100%;padding:8px 10px;border:1px solid var(--line);
+    border-radius:8px;font-size:14px;background:#fbfcfd;color:var(--ink);outline:none}
+  .field input:focus,.field select:focus{border-color:var(--accent);background:#fff}
+  .field input[type=number]{font-family:var(--mono)}
+  .hint{font-size:11px;color:#8a97a5;margin-top:3px}
+  .radio-row{display:flex;gap:18px;font-size:14px;align-items:center}
+  .radio-row label{display:flex;align-items:center;gap:6px;cursor:pointer}
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  th{font-size:12px;color:var(--sub);text-align:left;font-weight:600;
+    border-bottom:1px solid var(--line);padding:6px 8px}
+  td{padding:9px 8px;border-bottom:1px solid #f0f3f6}
+  td.num{font-family:var(--mono)}
+  tr:last-child td{border-bottom:none}
+  .result-title{font-size:13px;color:var(--sub);margin-bottom:8px}
+  .warn{background:var(--warn-bg);color:var(--warn-ink);font-size:12.5px;
+    padding:8px 12px;border-radius:8px;margin-top:12px}
+  .note{font-size:12px;color:var(--sub);background:#f8fafb;border:1px dashed var(--line);
+    border-radius:8px;padding:10px 14px;margin-top:14px}
+  .btn{padding:8px 16px;border-radius:8px;border:1px solid var(--accent);
+    background:var(--accent);color:#fff;font-size:13px;cursor:pointer}
+  .btn.ghost{background:#fff;color:var(--accent)}
+  .btn:hover{opacity:.9}
+  .actions{margin-top:14px;display:flex;gap:10px}
+  .copied{color:var(--ok);font-size:13px;display:none}
+  /* 模糊匹配下拉 */
+  .rp-name-cell{position:relative;min-width:180px}
+  .sugg{position:absolute;left:0;right:0;top:100%;z-index:60;background:#fff;border:1px solid var(--line);
+    border-radius:8px;box-shadow:0 8px 24px rgba(20,40,60,.14);max-height:232px;overflow-y:auto;display:none;margin-top:2px}
+  .sugg.open{display:block}
+  .sugg .it{padding:7px 11px;font-size:13px;cursor:pointer;display:flex;justify-content:space-between;gap:10px;align-items:center}
+  .sugg .it:hover,.sugg .it.hl{background:var(--accent-soft)}
+  .sugg .it b{font-weight:600}
+  .sugg .it .mw{font-family:var(--mono);font-size:11.5px;color:var(--sub);white-space:nowrap}
+  .sugg mark{background:#bfe6f0;border-radius:2px;padding:0 1px;color:inherit}
+  .sugg .none{padding:9px 11px;font-size:12px;color:var(--sub)}
+  /* 我的配方列表 */
+  .sr-item{margin-bottom:6px}
+  .sr-row{display:flex;align-items:center;gap:12px;padding:9px 12px;border:1px solid var(--line);
+    border-radius:9px;background:#fbfcfd;cursor:pointer;user-select:none}
+  .sr-row:hover{border-color:#c9d6de;background:#f4f8fa}
+  .sr-item.open .sr-row{border-radius:9px 9px 0 0;background:#f0f7fa;border-color:#bcd9e2}
+  .sr-row .sr-name{font-weight:600;font-size:14px}
+  .sr-row .sr-meta{flex:1;color:var(--sub);font-size:12px;font-family:var(--mono)}
+  .sr-row .sr-caret{color:var(--sub);font-size:11px;transition:transform .15s}
+  .sr-item.open .sr-caret{transform:rotate(90deg)}
+  .sr-detail{display:none;border:1px solid #bcd9e2;border-top:none;border-radius:0 0 9px 9px;
+    padding:12px 14px;background:#fff}
+  .sr-item.open .sr-detail{display:block}
+  .sr-vol{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+  .sr-vol label{color:var(--sub);font-size:12px}
+  .sr-vol input{width:110px;padding:5px 8px;border:1px solid var(--line);border-radius:7px;
+    font-family:var(--mono);font-size:13px;background:#fbfcfd}
+  .sr-vol input:focus{border-color:var(--accent);outline:none;background:#fff}
+  .sr-vol .sr-vol-note{color:var(--sub);font-size:11px}
+  .sr-tbl{width:100%;border-collapse:collapse;font-size:13px}
+  .sr-tbl th,.sr-tbl td{padding:6px 8px;border-bottom:1px solid #f0f3f6;text-align:left}
+  .sr-tbl th{font-size:12px;color:var(--sub);border-bottom:1px solid var(--line);font-weight:600}
+  .sr-tbl tr:last-child td{border-bottom:none}
+  .sr-empty{color:var(--sub);font-size:13px;padding:14px 4px;text-align:center}
+  /* 配方单打印 */
+  #srPrintArea{display:none}
+  .prt-head h1{font-size:20px;margin:0 0 4px}
+  .prt-head{border-bottom:2px solid #333;padding-bottom:10px;margin-bottom:14px}
+  .prt-meta{font-size:12px;color:#444}
+  .prt-table{width:100%;border-collapse:collapse;font-size:13px}
+  .prt-table th,.prt-table td{border:1px solid #888;padding:6px 9px;text-align:left;vertical-align:top}
+  .prt-table th{background:#efefef;font-weight:600}
+  .prt-note{font-size:11.5px;color:#555;margin-top:12px}
+  @media print{
+    body{background:#fff;padding:0}
+    body>.wrap,body>.toolbar,body>footer{display:none!important}
+    #srPrintArea{display:block!important}
+  }
+  /* buffer picker */
+  .picker{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin-bottom:16px}
+  .pk{padding:10px 12px;border:1px solid var(--line);border-radius:10px;cursor:pointer;
+    font-size:13px;background:#fbfcfd;text-align:center}
+  .pk small{display:block;color:var(--sub);font-size:11px;margin-top:2px;font-family:var(--mono)}
+  .pk.on{border-color:var(--accent);background:var(--accent-soft);font-weight:600}
+  .ref-table td,.ref-table th{font-size:12.5px;padding:6px 8px}
+  @media print{ body{background:#fff;padding:0} .tabs,.btn,.actions,.picker{display:none} section.tabpane{display:block!important} }
+</style>
+</head>
+<body>
+<div class="toolbar">
+  <div class="inner">
+    <a class="back" href="../index.html">
+      <svg viewBox="0 0 24 24"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>
+      工具集
+    </a>
+    <span class="crumb">实验室工具集 / <b>Buffer 配方计算器</b></span>
+    <span class="right"><i></i>纯前端 · 数据不上传</span>
+  </div>
+</div>
+<div class="wrap">
+  <header>
+    <h1>Buffer 配方计算器</h1>
+    <p>基于 Henderson–Hasselbalch 方程 · 支持温度校正 pKa · 数据可编辑，最终 pH 请用 pH 计校准</p>
+  </header>
+
+  <nav class="tabs">
+    <div class="tab on" data-tab="t1">缓冲液配方</div>
+    <div class="tab" data-tab="t2">多组分添加量</div>
+    <div class="tab" data-tab="t3">pH 调节计算</div>
+    <div class="tab" data-tab="t4">稀释计算</div>
+  </nav>
+
+  <!-- ========== Tab 1 缓冲液配方 ========== -->
+  <section class="tabpane on" id="t1">
+    <div class="card">
+      <h2><span class="dot"></span>选择缓冲体系</h2>
+      <div class="picker" id="picker"></div>
+
+      <div class="grid">
+        <div class="field"><label>配制方式</label>
+          <div class="radio-row" id="modeRow"></div>
+        </div>
+        <div class="field"><label>目标 pH</label>
+          <input type="number" id="b_ph" step="0.01" value="7.4">
+        </div>
+        <div class="field"><label>总浓度 (mmol/L)</label>
+          <input type="number" id="b_c" step="1" value="50">
+        </div>
+        <div class="field"><label>总体积 (mL)</label>
+          <input type="number" id="b_v" step="1" value="1000">
+        </div>
+        <div class="field"><label>工作温度 (°C)</label>
+          <input type="number" id="b_t" step="0.1" value="25">
+          <div class="hint"><label style="cursor:pointer"><input type="checkbox" id="b_tc" checked style="width:auto"> 按温度校正 pKa</label></div>
+        </div>
+        <div class="field" id="titrantField" style="display:none"><label>滴定液浓度 (mol/L)</label>
+          <input type="number" id="b_tit" step="0.1" value="1.0">
+        </div>
+      </div>
+
+      <div class="hint" id="pkaLine" style="margin:12px 2px 0;font-size:13px"></div>
+    </div>
+
+    <div class="card">
+      <h2><span class="dot"></span>各成分用量</h2>
+      <div id="compFields" class="grid" style="margin-bottom:16px"></div>
+      <div class="result-title" id="resTitle">配方结果</div>
+      <table>
+        <thead><tr><th style="width:32%">成分</th><th>摩尔量 (mmol)</th><th>称量 / 量取</th><th style="width:30%">备注</th></tr></thead>
+        <tbody id="resBody"></tbody>
+      </table>
+      <div id="resWarn"></div>
+      <div class="actions">
+        <button class="btn" id="copyBtn">复制配方文本</button>
+        <button class="btn ghost" onclick="window.print()">打印 / 导出 PDF</button>
+        <span class="copied" id="copied">✓ 已复制到剪贴板</span>
+      </div>
+      <div class="note" id="bufNote"></div>
+    </div>
+
+    <div class="card">
+      <h2><span class="dot"></span>常用缓冲液 pKa 速查 (25 °C)</h2>
+      <table class="ref-table">
+        <thead><tr><th>缓冲体系</th><th>pKa</th><th>有效 pH 范围</th><th>ΔpKa/°C</th><th>说明</th></tr></thead>
+        <tbody id="refBody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ========== Tab 2 多组分 ========== -->
+  <section class="tabpane" id="t2">
+    <div class="card">
+      <h2><span class="dot"></span>多组分添加量计算</h2>
+      <div class="grid" style="margin-bottom:14px">
+        <div class="field"><label>溶液总体积 (mL)</label><input type="number" id="c_v" step="0.1" value="1000"></div>
+        <div class="field" style="align-self:end"><button class="btn ghost" id="addRowBtn">＋ 添加成分行</button></div>
+      </div>
+      <div style="overflow-x:auto">
+      <table id="recipeTable">
+        <thead><tr>
+          <th>成分（输入即模糊匹配）</th><th>形态</th><th>摩尔质量<br>(g/mol)</th><th>密度<br>(g/mL)</th><th>纯度<br>(%)</th>
+          <th>目标浓度</th><th>单位</th><th style="min-width:190px">添加量</th><th></th>
+        </tr></thead>
+        <tbody id="recipeBody"></tbody>
+      </table>
+      </div>
+      <div class="actions">
+        <button class="btn" id="copyRecipe">复制配方文本</button>
+        <button class="btn ghost" id="clearRecipe">清空配方行</button>
+        <span class="copied" id="copied2">✓ 已复制到剪贴板</span>
+      </div>
+      <div class="note">成分列直接打字即从物质数据库模糊联想（如输入 tris、甘、twe 均可命中），选中后自动带入摩尔质量/密度/纯度；下拉没有的当自定义物质临时录入，参数仍可手改。液体按 质量 ÷ 密度 ÷ 纯度 折算量取体积；%(v/v) 直接按目标体积百分比量取。配方与物质数据库均自动保存在本机浏览器。</div>
+    </div>
+
+    <div class="card">
+      <h2><span class="dot"></span>我的配方 <span style="font-weight:400;font-size:12px;color:var(--sub)" id="sr_count"></span></h2>
+      <div class="grid" style="margin-bottom:14px;grid-template-columns:minmax(220px,1fr) auto">
+        <div class="field"><label>配方名称</label><input type="text" id="sr_name" placeholder="如 PBS 1L、裂解液、透析液…"></div>
+        <div class="field" style="align-self:end"><button class="btn" id="sr_save">保存当前配方</button></div>
+      </div>
+      <div id="sr_list"></div>
+      <div class="note">保存内容包括全部配方行（成分、参数、浓度、单位）与总体积；<b>点击配方行</b>可展开查看成分明细，并直接修改配制体积（用量即时重算、自动保存）；「载入」会整表恢复到上方配方表。同名保存视为覆盖。</div>
+    </div>
+
+    <div class="card">
+      <h2><span class="dot"></span>物质数据库 <span style="font-weight:400;font-size:12px;color:var(--sub)" id="libCount"></span></h2>
+      <div class="grid" style="margin-bottom:12px;grid-template-columns:minmax(180px,1.4fr) 92px 108px 92px 92px auto">
+        <div class="field"><label>新增物质 · 名称</label><input type="text" id="ns_name" placeholder="如 NaH₂PO₄ / 谷胱甘肽"></div>
+        <div class="field"><label>形态</label>
+          <select id="ns_state"><option value="solid">固体</option><option value="liquid">液体</option></select></div>
+        <div class="field"><label>摩尔质量 (g/mol)</label><input type="number" id="ns_mw" step="0.01" placeholder="必填"></div>
+        <div class="field"><label>密度 (g/mL)</label><input type="number" id="ns_d" step="0.001" disabled></div>
+        <div class="field"><label>纯度 (%)</label><input type="number" id="ns_p" step="0.1" value="100" disabled></div>
+        <div class="field" style="align-self:end"><button class="btn" id="ns_add" style="width:100%">添加入库</button></div>
+      </div>
+      <div class="field" style="max-width:320px;margin-bottom:10px"><label>搜索（支持模糊匹配）</label>
+        <input type="text" id="libSearch" placeholder="输入关键字过滤下方列表…"></div>
+      <div style="overflow-x:auto">
+      <table id="libTable">
+        <thead><tr><th>名称</th><th>形态</th><th>摩尔质量 (g/mol)</th><th>密度 (g/mL)</th><th>纯度 (%)</th><th></th></tr></thead>
+        <tbody id="libBody"></tbody>
+      </table>
+      </div>
+      <div class="actions">
+        <button class="btn ghost" id="exportLibBtn">导出数据库 (JSON)</button>
+        <button class="btn ghost" id="importLibBtn">导入 (JSON / CSV)</button>
+        <input type="file" id="importFile" accept=".json,.csv,.txt" style="display:none">
+        <button class="btn ghost" id="resetSubBtn">恢复默认库</button>
+      </div>
+      <div class="note">数据库中补充/修改试剂（名称、形态、摩尔质量、密度、纯度），配方表即时可用；数据保存在本机浏览器，可通过导出/导入在设备间迁移，也支持从 Excel 复制的 CSV（列序：名称,形态,摩尔质量,密度,纯度）批量导入。</div>
+    </div>
+  </section>
+
+  <!-- ========== Tab 3 pH 调节 ========== -->
+  <section class="tabpane" id="t3">
+    <div class="card">
+      <h2><span class="dot"></span>将缓冲液从当前 pH 调至目标 pH（强酸/强碱用量估算）</h2>
+      <div class="grid">
+        <div class="field"><label>缓冲液总浓度 (mmol/L)</label><input type="number" id="a_c" step="1" value="50"></div>
+        <div class="field"><label>溶液体积 (mL)</label><input type="number" id="a_v" step="1" value="1000"></div>
+        <div class="field"><label>缓冲对 pKa（25 °C）</label><input type="number" id="a_pka" step="0.01" value="8.06"></div>
+        <div class="field"><label>当前 pH</label><input type="number" id="a_p1" step="0.01" value="7.2"></div>
+        <div class="field"><label>目标 pH</label><input type="number" id="a_p2" step="0.01" value="7.6"></div>
+        <div class="field"><label>调节用试剂</label>
+          <select id="a_titrant"><option value="base">NaOH（升 pH）</option><option value="acid">HCl（降 pH）</option></select>
+        </div>
+        <div class="field"><label>滴定液浓度 (mol/L)</label><input type="number" id="a_tm" step="0.1" value="1.0"></div>
+      </div>
+      <div id="a_res" style="margin-top:18px"></div>
+      <div class="note">原理：目标 pH 对应的共轭碱摩尔分数变化 × 缓冲总摩尔数 = 需转化的量。估算基于理想溶液，实际滴加时应边搅边用 pH 计监测，接近目标时改用稀滴定液微调。</div>
+    </div>
+  </section>
+
+  <!-- ========== Tab 4 稀释 ========== -->
+  <section class="tabpane" id="t4">
+    <div class="card">
+      <h2><span class="dot"></span>储备液稀释（C₁V₁ = C₂V₂）</h2>
+      <div class="grid">
+        <div class="field"><label>储备液浓度 C₁</label><input type="number" id="d_c1" step="0.001" value="1"></div>
+        <div class="field"><label>目标浓度 C₂</label><input type="number" id="d_c2" step="0.001" value="0.05"></div>
+        <div class="field"><label>目标体积 V₂ (mL)</label><input type="number" id="d_v2" step="0.1" value="100"></div>
+      </div>
+      <div id="d_res" style="margin-top:18px"></div>
+      <div class="note">取 V₁ 储备液，加水（或其他溶剂）定容至 V₂。补加溶剂量 = V₂ − V₁。</div>
+    </div>
+  </section>
+</div>
+
+<footer>
+  <span>实验室工具集</span>
+  <span class="sep">/</span>
+  <a href="../index.html">工具集首页</a>
+</footer>
+
+<!-- 配方单打印区（仅打印时可见） -->
+<div id="srPrintArea"></div>
+
+<script>
+/* ============ 数据 ============ */
+const BUFFERS = [
+  { id:'tris', name:'Tris-HCl', pKa:8.06, dpKa:-0.028, range:[7.0,9.0],
+    note:'蛋白电泳、层析常用。pH 随温度下降显著升高（约 +0.03/°C），低温配制注意。',
+    acid:{label:'Tris·HCl（酸式/质子化）', mw:157.60},
+    base:{label:'Tris Base（游离碱）', mw:121.14},
+    titrate:{dissolve:'base', titrantLabel:'HCl'} },
+  { id:'phos', name:'磷酸盐 PB', pKa:7.21, dpKa:-0.0028, range:[5.8,8.2],
+    note:'生理 pH 常用；避免与 Ca²⁺、Mg²⁺ 共存（生成沉淀），不适合某些酶反应。',
+    acid:{label:'NaH₂PO₄', mw:156.01, hint:'无水 119.98 · 二水 156.01'},
+    base:{label:'Na₂HPO₄', mw:177.99, hint:'无水 141.96 · 二水 177.99 · 十二水 358.14'} },
+  { id:'acet', name:'醋酸盐', pKa:4.76, dpKa:-0.0002, range:[3.6,5.8],
+    note:'核酸沉淀、蛋白酸沉常用；酸组分为冰醋酸，可直接量取。',
+    acid:{label:'冰醋酸（酸式）', mw:60.05, liquid:true, density:1.05, purity:99.5},
+    base:{label:'醋酸钠·3H₂O', mw:136.08, hint:'无水 82.03'},
+    titrate:{dissolve:'base', titrantLabel:'醋酸(按1 mol计,改用量取)'} },
+  { id:'cit', name:'柠檬酸盐', pKa:4.76, dpKa:-0.002, range:[3.8,5.8],
+    note:'多元酸，此计算取 pKa2；更高 pH 段(>5.5)偏差增大，建议实测校准。',
+    acid:{label:'柠檬酸·H₂O', mw:210.14, hint:'无水 192.12'},
+    base:{label:'柠檬酸三钠·2H₂O', mw:294.10, hint:'无水 258.06'} },
+  { id:'hepes', name:'HEPES', pKa:7.55, dpKa:-0.014, range:[6.8,8.2],
+    note:'细胞培养、酶学常用，不与金属离子螯合沉淀。',
+    acid:{label:'HEPES（游离酸）', mw:238.30},
+    base:{label:'HEPES 钠盐', mw:260.29},
+    titrate:{dissolve:'acid', titrantLabel:'NaOH'} },
+  { id:'mes', name:'MES', pKa:6.15, dpKa:-0.011, range:[5.5,6.7],
+    note:'弱酸性范围 Good 缓冲液，常用于等电点附近蛋白稳定。',
+    acid:{label:'MES（游离酸）', mw:195.24},
+    base:{label:'MES 钠盐', mw:217.22},
+    titrate:{dissolve:'acid', titrantLabel:'NaOH'} },
+  { id:'mops', name:'MOPS', pKa:7.20, dpKa:-0.011, range:[6.5,7.9],
+    note:'RNA 电泳、蛋白结晶常用。',
+    acid:{label:'MOPS（游离酸）', mw:209.26},
+    base:{label:'MOPS 钠盐', mw:231.25},
+    titrate:{dissolve:'acid', titrantLabel:'NaOH'} },
+  { id:'gly', name:'甘氨酸-HCl', pKa:2.34, dpKa:-0.002, range:[2.2,3.6],
+    note:'洗脱/低 pH 处理常用；仅滴定法。',
+    acid:{label:'甘氨酸', mw:75.07},
+    base:null,
+    titrate:{dissolve:'acid', titrantLabel:'HCl'} },
+  { id:'carb', name:'碳酸盐', pKa:10.33, dpKa:-0.009, range:[9.2,10.8],
+    note:'包被缓冲液（ELISA）常用；接触空气易吸 CO₂ 致 pH 漂移。',
+    acid:{label:'NaHCO₃', mw:84.01},
+    base:{label:'Na₂CO₃（无水）', mw:105.99, hint:'十水 286.14'},
+    titrate:{dissolve:'acid', titrantLabel:'NaOH'} },
+  { id:'bor', name:'硼酸盐', pKa:9.24, dpKa:-0.008, range:[8.2,10.1],
+    note:'仅滴定法（硼酸+NaOH）；硼酸与多元醇/顺邻羟基化合物络合，避免含糖体系。',
+    acid:{label:'硼酸 H₃BO₃', mw:61.83},
+    base:null,
+    titrate:{dissolve:'acid', titrantLabel:'NaOH'} },
+];
+
+/* ============ 通用 ============ */
+const $ = id => document.getElementById(id);
+const fmt = (x, d=2) => { if(!isFinite(x)) return '—';
+  const s = x.toFixed(d); return /^0\.0+$/.test(s) ? x.toExponential(2) : parseFloat(s).toLocaleString('en-US',{maximumFractionDigits:d}); };
+function frac(pH, pKa){ const r = Math.pow(10, pH - pKa); return {r, fAcid:1/(1+r), fBase:r/(1+r)}; }
+
+/* Tabs */
+document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => {
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));
+  document.querySelectorAll('.tabpane').forEach(x=>x.classList.remove('on'));
+  t.classList.add('on'); $(t.dataset.tab).classList.add('on');
+}));
+
+/* ============ Tab1 ============ */
+let curBuf = BUFFERS[0], curMode = 'weigh';
+const picker = $('picker');
+BUFFERS.forEach(b => {
+  const d = document.createElement('div'); d.className = 'pk'; d.textContent = b.name;
+  const s = document.createElement('small'); s.textContent = `pH ${b.range[0]}–${b.range[1]}`; d.appendChild(s);
+  d.onclick = () => { curBuf = b; curMode = b.base ? 'weigh' : 'titrate'; $('b_ph').value = ((b.range[0]+b.range[1])/2).toFixed(1); renderPicker(); renderBufForm(); calcBuf(); };
+  picker.appendChild(d);
+});
+function renderPicker(){ [...picker.children].forEach((el,i)=> el.classList.toggle('on', BUFFERS[i]===curBuf)); }
+
+function renderBufForm(){
+  const mr = $('modeRow'); mr.innerHTML = '';
+  const modes = curBuf.base ? [['weigh','双组分称量法'],['titrate','滴定法']] : [['titrate','滴定法（单一组分 + 滴定液）']];
+  modes.forEach(([v,l]) => {
+    const lb = document.createElement('label');
+    lb.innerHTML = `<input type="radio" name="bmode" ${curMode===v?'checked':''} style="width:auto"> ${l}`;
+    lb.querySelector('input').onchange = () => { curMode = v; renderBufForm(); calcBuf(); };
+    mr.appendChild(lb);
+  });
+  $('titrantField').style.display = curMode==='titrate' ? '' : 'none';
+
+  const cf = $('compFields'); cf.innerHTML = '';
+  const mkMW = (key, comp) => {
+    const f = document.createElement('div'); f.className = 'field';
+    f.innerHTML = `<label>${comp.label} · MW (g/mol)</label>
+      <input type="number" step="0.01" id="mw_${key}" value="${comp.mw}">`;
+    if(comp.hint){ const h = document.createElement('div'); h.className='hint'; h.textContent = '可选水合物：' + comp.hint; f.appendChild(h); }
+    if(comp.liquid){
+      f.innerHTML += `<div class="hint">液体：密度 <input type="number" id="liq_d" value="${comp.density}" step="0.001" style="width:64px;padding:2px 6px"> g/mL，纯度 <input type="number" id="liq_p" value="${comp.purity}" step="0.1" style="width:64px;padding:2px 6px"> %</div>`;
+      f.querySelectorAll('input').forEach(i=>i.addEventListener('input', calcBuf));
+    }
+    f.querySelector('input').addEventListener('input', calcBuf);
+    cf.appendChild(f);
+  };
+  if(curMode === 'weigh'){ mkMW('acid', curBuf.acid); mkMW('base', curBuf.base); }
+  else {
+    const comp = curBuf.titrate.dissolve === 'base' ? curBuf.base : curBuf.acid;
+    mkMW('diss', comp);
+    const f = document.createElement('div'); f.className = 'field';
+    f.innerHTML = `<label>滴定液（${curBuf.titrate.titrantLabel}）</label>
+      <input type="text" value="${curBuf.titrate.titrantLabel}，浓度见上方" readonly style="color:var(--sub)">`;
+    cf.appendChild(f);
+  }
+  $('bufNote').innerHTML = `<b>${curBuf.name}</b>：${curBuf.note}`;
+}
+
+function pKaEff(){
+  let p = curBuf.pKa;
+  if($('b_tc').checked){ p += curBuf.dpKa * (parseFloat($('b_t').value) - 25); }
+  return p;
+}
+function calcBuf(){
+  const pH = parseFloat($('b_ph').value), c = parseFloat($('b_c').value)/1000, V = parseFloat($('b_v').value)/1000;
+  const pKa = pKaEff();
+  $('pkaLine').innerHTML = `<b>${curBuf.name}</b> · pKa@25°C = ${curBuf.pKa}` +
+    ($('b_tc').checked ? ` → 校正后 pKa@${$('b_t').value}°C = <b>${pKa.toFixed(2)}</b>（ΔpKa/°C = ${curBuf.dpKa}）` : '') +
+    ` · 有效范围 pH ${curBuf.range[0]}–${curBuf.range[1]}`;
+  const nT = c * V; // mol
+  const {r, fAcid, fBase} = frac(pH, pKa);
+  const body = $('resBody'); body.innerHTML = '';
+  let warn = '', summary = `【${curBuf.name} 缓冲液】pH ${pH}，${$('b_c').value} mM，${$('b_v').value} mL\n`;
+
+  const addRow = (name, mmol, amount, note='') => {
+    body.insertAdjacentHTML('beforeend',
+      `<tr><td>${name}</td><td class="num">${fmt(mmol,2)}</td><td class="num">${amount}</td><td style="color:var(--sub);font-size:12.5px">${note}</td></tr>`);
+  };
+  const massStr = (mmol, mw) => `${fmt(mmol/1000*mw,3)} g`;
+  const liquidStr = (g) => {
+    const d = parseFloat($('liq_d')?.value), p = parseFloat($('liq_p')?.value)/100;
+    return isFinite(d)&&isFinite(p)&&p>0 ? `${fmt(g,3)} g ≈ <b>${fmt(g/d/p,2)} mL</b>` : `${fmt(g,3)} g`;
+  };
+
+  if(curMode === 'weigh'){
+    const nA = nT*fAcid*1000, nB = nT*fBase*1000;
+    const mwA = parseFloat($('mw_acid').value), mwB = parseFloat($('mw_base').value);
+    const gA = nA/1000*mwA, gB = nB/1000*mwB;
+    const amtA = curBuf.acid.liquid ? liquidStr(gA) : massStr(nA, mwA);
+    addRow(curBuf.acid.label, nA, amtA, curBuf.acid.liquid ? '先量取后溶解' : '酸式组分');
+    addRow(curBuf.base.label, nB, massStr(nB, mwB), '碱式组分');
+    summary += `· ${curBuf.acid.label}: ${fmt(gA,3)} g${curBuf.acid.liquid?` ≈ ${fmt(gA/parseFloat($('liq_d').value)/(parseFloat($('liq_p').value)/100),2)} mL`:''}\n`;
+    summary += `· ${curBuf.base.label}: ${fmt(gB,3)} g\n`;
+    $('resTitle').textContent = `配方结果 —— 溶解后定容至 ${$('b_v').value} mL`;
+  } else {
+    const comp = curBuf.titrate.dissolve === 'base' ? curBuf.base : curBuf.acid;
+    const mw = parseFloat($('mw_diss').value);
+    const g = nT*1000/1000*mw;
+    const isTitrantAcid = curBuf.titrate.titrantLabel.startsWith('HCl');
+    const nTit = isTitrantAcid ? nT*fAcid : nT*fBase;
+    const titM = parseFloat($('b_tit').value);
+    addRow(comp.label, nT*1000, massStr(nT*1000, mw), '全部溶入');
+    addRow(`${curBuf.titrate.titrantLabel}（${titM} mol/L）`, nTit*1000, `${fmt(nTit*1000,2)} mmol ≈ <b>${fmt(nTit/titM*1000,2)} mL</b>`, '边搅边滴加');
+    summary += `· ${comp.label}: ${fmt(g,3)} g\n· ${curBuf.titrate.titrantLabel} (${titM} mol/L): ${fmt(nTit/titM*1000,2)} mL（滴加后定容）\n`;
+    $('resTitle').textContent = `配方结果 —— 滴定至目标 pH 后定容至 ${$('b_v').value} mL`;
+  }
+
+  if(pH < curBuf.range[0] || pH > curBuf.range[1])
+    warn += `<div class="warn">⚠️ 目标 pH ${pH} 超出 ${curBuf.name} 有效缓冲范围（${curBuf.range[0]}–${curBuf.range[1]}），缓冲能力不足，建议换体系。</div>`;
+  else if(Math.abs(pH - pKa) > 1)
+    warn += `<div class="warn">⚠️ pH 与 pKa 相差超过 1（当前 |Δ| = ${Math.abs(pH-pKa).toFixed(2)}），缓冲容量明显下降。</div>`;
+  $('resWarn').innerHTML = warn;
+
+  summary += `· pKa（${$('b_tc').checked ? $('b_t').value+'°C 校正' : '25°C'}）= ${pKa.toFixed(2)}\n（估算值，定容后请用 pH 计复核微调）`;
+  $('copyBtn').onclick = () => {
+    navigator.clipboard.writeText(summary).then(()=>{ $('copied').style.display='inline'; setTimeout(()=>$('copied').style.display='none',1800); });
+  };
+}
+
+['b_ph','b_c','b_v','b_t','b_tc','b_tit'].forEach(id => $(id).addEventListener('input', calcBuf));
+renderPicker(); renderBufForm(); calcBuf();
+
+/* pKa 速查表 */
+$('refBody').innerHTML = BUFFERS.map(b =>
+  `<tr><td>${b.name}</td><td class="num">${b.pKa}</td><td class="num">${b.range[0]} – ${b.range[1]}</td><td class="num">${b.dpKa}</td><td style="color:var(--sub)">${b.note.length>26 ? b.note.slice(0,26)+'…' : b.note}</td></tr>`).join('');
+
+/* ============ Tab2 多组分添加量 ============ */
+const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const UNIT_LABEL = {M:'mol/L', mM:'mmol/L', gL:'g/L', mgmL:'mg/mL', pct:'%(w/v)', pctv:'%(v/v)'};
+
+const DEFAULT_LIB = [
+  {name:'NaCl', state:'solid', mw:58.44, density:null, purity:100},
+  {name:'KCl', state:'solid', mw:74.55, density:null, purity:100},
+  {name:'Tris Base', state:'solid', mw:121.14, density:null, purity:100},
+  {name:'Tris·HCl', state:'solid', mw:157.60, density:null, purity:100},
+  {name:'NaH₂PO₄·2H₂O', state:'solid', mw:156.01, density:null, purity:100},
+  {name:'Na₂HPO₄·2H₂O', state:'solid', mw:177.99, density:null, purity:100},
+  {name:'咪唑', state:'solid', mw:68.08, density:null, purity:100},
+  {name:'甘氨酸', state:'solid', mw:75.07, density:null, purity:100},
+  {name:'蔗糖', state:'solid', mw:342.30, density:null, purity:100},
+  {name:'海藻糖·2H₂O', state:'solid', mw:378.33, density:null, purity:100},
+  {name:'甘露醇', state:'solid', mw:182.17, density:null, purity:100},
+  {name:'山梨醇', state:'solid', mw:182.17, density:null, purity:100},
+  {name:'EDTA·2Na·2H₂O', state:'solid', mw:372.24, density:null, purity:100},
+  {name:'MgCl₂·6H₂O', state:'solid', mw:203.30, density:null, purity:100},
+  {name:'CaCl₂·2H₂O', state:'solid', mw:147.01, density:null, purity:100},
+  {name:'DTT', state:'solid', mw:154.25, density:null, purity:100},
+  {name:'PEG 8000', state:'solid', mw:8000, density:null, purity:100},
+  {name:'甘油', state:'liquid', mw:92.09, density:1.26, purity:99.5},
+  {name:'Tween-20', state:'liquid', mw:1228, density:1.095, purity:100},
+  {name:'Tween-80', state:'liquid', mw:1310, density:1.07, purity:100},
+  {name:'冰醋酸', state:'liquid', mw:60.05, density:1.05, purity:99.5},
+  {name:'β-巯基乙醇', state:'liquid', mw:78.13, density:1.11, purity:99},
+  {name:'乙醇', state:'liquid', mw:46.07, density:0.789, purity:95},
+  {name:'异丙醇', state:'liquid', mw:60.10, density:0.786, purity:99.7},
+];
+
+const LIB_KEY = 'buf_calc_lib_v1', REC_KEY = 'buf_calc_recipe_v1';
+function loadJSON(key, fallback){
+  try { const v = JSON.parse(localStorage.getItem(key)); return Array.isArray(v) ? v : fallback; }
+  catch(e){ return fallback; }
+}
+let LIB = loadJSON(LIB_KEY, null) || DEFAULT_LIB.map(s => ({...s}));
+let recipe = loadJSON(REC_KEY, null) || [
+  {lib:-1, name:'NaCl',  state:'solid',  mw:58.44,  density:null, purity:100, conc:150, unit:'mM'},
+  {lib:-1, name:'Tris Base', state:'solid', mw:121.14, density:null, purity:100, conc:25, unit:'mM'},
+  {lib:-1, name:'甘油', state:'liquid', mw:92.09, density:1.26, purity:99.5, conc:10, unit:'pctv'},
+];
+function saveAll(){ try { localStorage.setItem(LIB_KEY, JSON.stringify(LIB)); localStorage.setItem(REC_KEY, JSON.stringify(recipe)); } catch(e){} }
+
+/* ---- 物质数据库：模糊匹配 + 搜索 + 表单新增 + 导入导出 ---- */
+const normName = s => String(s || '').toLowerCase().replace(/[\s·・_\-]/g, '');
+function fuzzy(q){
+  const raw = String(q || '').trim();
+  if(!raw) return [];
+  const toks = raw.toLowerCase().split(/[\s·・,，]+/).map(normName).filter(Boolean); // 先分词再归一
+  const nq = normName(raw);
+  const out = [];
+  LIB.forEach((s, si) => {
+    const n = normName(s.name);
+    let sc = -1;
+    if(n === nq) sc = 100;                                  // 完全一致
+    else if(n.startsWith(nq)) sc = 50;                      // 前缀
+    else if(n.includes(nq)) sc = 20;                        // 包含
+    else if(toks.length > 1 && toks.every(t => n.includes(t))) sc = 10; // 多关键字（乱序命中）
+    if(sc >= 0) out.push({si, s, sc});
+  });
+  return out.sort((a, b) => b.sc - a.sc).slice(0, 8);
+}
+function highlight(name, q){
+  const nq = normName(q);
+  if(!nq) return esc(name);
+  const n = normName(name);
+  const idx = n.indexOf(nq);
+  if(idx < 0) return esc(name);
+  let count = 0, start = -1, end = -1;
+  for(let k = 0; k < name.length; k++){
+    if(/[\s·・_\-]/.test(name[k])) continue;
+    if(count === idx) start = k;
+    if(count === idx + nq.length - 1){ end = k; break; }
+    count++;
+  }
+  if(start < 0 || end < 0) return esc(name);
+  return esc(name.slice(0, start)) + '<mark>' + esc(name.slice(start, end + 1)) + '</mark>' + esc(name.slice(end + 1));
+}
+
+function renderLib(){
+  const q = ($('libSearch')?.value || '').trim();
+  const nq = normName(q);
+  const tb = $('libBody'); tb.innerHTML = '';
+  let shown = 0;
+  LIB.forEach((s, i) => {
+    if(nq && !normName(s.name).includes(nq)) return;
+    shown++;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><input type="text" value="${esc(s.name)}" data-f="name" style="min-width:110px"></td>
+      <td><select data-f="state">
+        <option value="solid"${s.state==='solid'?' selected':''}>固体</option>
+        <option value="liquid"${s.state==='liquid'?' selected':''}>液体</option></select></td>
+      <td><input type="number" step="0.01" value="${s.mw ?? ''}" data-f="mw" style="width:96px"></td>
+      <td><input type="number" step="0.001" value="${s.density ?? ''}" data-f="density" ${s.state==='liquid'?'':'disabled'} style="width:80px"></td>
+      <td><input type="number" step="0.1" value="${s.purity ?? ''}" data-f="purity" ${s.state==='liquid'?'':'disabled'} style="width:80px"></td>
+      <td><button class="btn ghost" style="padding:3px 10px" title="删除该物质">删</button></td>`;
+    tr.querySelectorAll('[data-f]').forEach(inp => inp.addEventListener('input', () => {
+      const f = inp.dataset.f;
+      LIB[i][f] = (f === 'state') ? inp.value : (inp.value === '' ? null : parseFloat(inp.value));
+      if(f === 'state') renderLib();
+      syncRecipeFromLib(); saveAll(); recalcRecipe();
+    }));
+    tr.querySelector('button').onclick = () => {
+      if(!confirm(`从数据库删除「${s.name}」？（配方行中已选它的将转为自定义）`)) return;
+      LIB.splice(i, 1); renderLib(); syncRecipeFromLib(); saveAll();
+    };
+    tb.appendChild(tr);
+  });
+  $('libCount').textContent = `共 ${LIB.length} 种物质` + (nq ? ` · 匹配 ${shown} 种` : '');
+}
+$('libSearch').addEventListener('input', renderLib);
+
+/* 新增入库 */
+$('ns_state').addEventListener('change', () => {
+  const liq = $('ns_state').value === 'liquid';
+  $('ns_d').disabled = !liq; $('ns_p').disabled = !liq;
+});
+$('ns_add').onclick = () => {
+  const name = $('ns_name').value.trim();
+  const mw = parseFloat($('ns_mw').value);
+  if(!name || !isFinite(mw) || mw <= 0){ alert('请填写名称和摩尔质量（摩尔质量需大于 0）'); return; }
+  if(LIB.some(s => normName(s.name) === normName(name)) && !confirm('数据库中已有同名物质，仍要添加吗？')) return;
+  const liq = $('ns_state').value === 'liquid';
+  LIB.push({name, state: liq?'liquid':'solid', mw,
+    density: liq ? (parseFloat($('ns_d').value) || null) : null,
+    purity:  liq ? (parseFloat($('ns_p').value) || 100) : 100});
+  saveAll(); renderLib();
+  $('ns_name').value = ''; $('ns_mw').value = ''; $('ns_d').value = ''; $('ns_p').value = '100';
+  $('ns_name').focus();
+};
+
+/* 导出 / 导入 */
+$('exportLibBtn').onclick = () => {
+  const blob = new Blob([JSON.stringify(LIB, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = '物质数据库.json'; a.click();
+  URL.revokeObjectURL(a.href);
+};
+$('importLibBtn').onclick = () => $('importFile').click();
+$('importFile').addEventListener('change', e => {
+  const f = e.target.files[0]; if(!f) return;
+  const rd = new FileReader();
+  rd.onload = () => {
+    let items = null;
+    try {
+      if(/\.json$/i.test(f.name)){
+        const j = JSON.parse(rd.result);
+        if(!Array.isArray(j)) throw 0;
+        items = j.map(x => ({
+          name: String(x.name ?? x.名称 ?? '').trim(),
+          state: (x.state === 'liquid' || x.形态 === '液体') ? 'liquid' : 'solid',
+          mw: parseFloat(x.mw ?? x.摩尔质量),
+          density: parseFloat(x.density ?? x.密度 ?? '') || null,
+          purity: parseFloat(x.purity ?? x.纯度 ?? '') || 100,
+        })).filter(x => x.name && isFinite(x.mw));
+      } else {
+        const lines = String(rd.result).split(/\r?\n/).filter(l => l.trim());
+        items = lines.map((ln, li) => {
+          if(li === 0 && /名称|name/i.test(ln)) return null; // 表头行
+          const c = ln.split(/[\t,]/).map(x => x.trim());
+          return {name: c[0], state: (c[1] === '液体' || /^liquid/i.test(c[1]||'')) ? 'liquid' : 'solid',
+                  mw: parseFloat(c[2]), density: c[3] ? parseFloat(c[3]) : null,
+                  purity: c[4] ? parseFloat(c[4]) : 100};
+        }).filter(x => x && x.name && isFinite(x.mw));
+      }
+    } catch(ex){ items = null; }
+    if(!items || !items.length){
+      alert('导入失败：请使用本工具导出的 JSON，或 CSV/TSV 文本（列序：名称,形态,摩尔质量,密度,纯度）');
+    } else {
+      let add = 0, skip = 0;
+      items.forEach(x => {
+        if(LIB.some(s => normName(s.name) === normName(x.name))){ skip++; return; }
+        LIB.push(x); add++;
+      });
+      saveAll(); renderLib(); syncRecipeFromLib();
+      alert(`导入完成：新增 ${add} 种，跳过 ${skip} 项（重名或缺摩尔质量）`);
+    }
+    e.target.value = '';
+  };
+  rd.readAsText(f, 'utf-8');
+});
+$('resetSubBtn').onclick = () => {
+  if(!confirm('恢复默认数据库？将覆盖当前自建条目。')) return;
+  LIB = DEFAULT_LIB.map(s => ({...s})); renderLib(); syncRecipeFromLib(); saveAll();
+};
+
+/* 配方行与库同步：库中被删/改名时保持配方行可用 */
+function syncRecipeFromLib(){
+  recipe.forEach(r => {
+    if(r.lib >= 0 && r.lib < LIB.length){
+      const s = LIB[r.lib];
+      r.name = s.name; r.state = s.state; r.mw = s.mw; r.density = s.density; r.purity = s.purity;
+    } else if(r.lib >= 0) r.lib = -1; // 物质已删除 → 转自定义
+  });
+  renderRecipe();
+}
+
+/* ---- 配方表：成分输入模糊匹配物质数据库 ---- */
+function renderRecipe(){
+  const tb = $('recipeBody'); tb.innerHTML = '';
+  recipe.forEach((r, i) => {
+    const tr = document.createElement('tr');
+    const unitOpts = Object.entries(UNIT_LABEL).map(([k, v]) =>
+      `<option value="${k}"${r.unit === k ? ' selected' : ''}>${v}</option>`).join('');
+    tr.innerHTML = `
+      <td class="rp-name-cell">
+        <input type="text" class="rp-name" value="${esc(r.name)}" placeholder="打字模糊匹配，如 tris / 甘" autocomplete="off">
+        <div class="sugg"></div>
+      </td>
+      <td><select class="rp-state">
+        <option value="solid"${r.state==='solid'?' selected':''}>固体</option>
+        <option value="liquid"${r.state==='liquid'?' selected':''}>液体</option></select></td>
+      <td><input type="number" step="0.01" class="rp-mw" value="${r.mw ?? ''}" style="width:96px"></td>
+      <td><input type="number" step="0.001" class="rp-d" value="${r.density ?? ''}" ${r.state==='liquid'?'':'disabled'} style="width:80px"></td>
+      <td><input type="number" step="0.1" class="rp-p" value="${r.purity ?? ''}" ${r.state==='liquid'?'':'disabled'} style="width:80px"></td>
+      <td><input type="number" step="0.001" class="rp-conc" value="${r.conc ?? ''}" style="width:96px"></td>
+      <td><select class="rp-unit" style="min-width:92px">${unitOpts}</select></td>
+      <td class="rp-amt num"></td>
+      <td><button class="btn ghost" style="padding:3px 10px" title="删除该行">删</button></td>`;
+
+    /* --- 成分模糊匹配 --- */
+    const nameInp = tr.querySelector('.rp-name'), sugg = tr.querySelector('.sugg');
+    let curList = [], hl = -1;
+    const closeSugg = () => { sugg.classList.remove('open'); sugg.innerHTML = ''; curList = []; hl = -1; };
+    const pickLib = si => {
+      const s = LIB[si];
+      recipe[i] = {lib: si, name: s.name, state: s.state, mw: s.mw, density: s.density, purity: s.purity,
+                   conc: recipe[i].conc, unit: recipe[i].unit};
+      if(recipe[i].state === 'solid' && recipe[i].unit === 'pctv') recipe[i].unit = 'mM';
+      renderRecipe(); saveAll();
+    };
+    const showSugg = () => {
+      const q = nameInp.value.trim();
+      curList = q ? fuzzy(q) : LIB.slice(0, 8).map((s, si) => ({si, s, sc: 0}));
+      hl = -1;
+      sugg.innerHTML = curList.length
+        ? curList.map((m, k) => `
+            <div class="it" data-k="${k}">
+              <b>${highlight(m.s.name, q)}</b>
+              <span class="mw">${m.s.state === 'liquid' ? '液体' : '固体'} · MW ${m.s.mw}</span>
+            </div>`).join('')
+        : '<div class="none">无匹配 — 将作为自定义物质处理</div>';
+      sugg.classList.add('open');
+      sugg.querySelectorAll('.it').forEach(el => el.addEventListener('mousedown', ev => {
+        ev.preventDefault();
+        pickLib(curList[+el.dataset.k].si);
+      }));
+    };
+    nameInp.addEventListener('input', () => {
+      r.name = nameInp.value;
+      if(r.lib >= 0) r.lib = -1;   // 手动输入 → 解绑库条目
+      saveAll(); showSugg(); recalcRecipe();
+    });
+    nameInp.addEventListener('focus', showSugg);
+    nameInp.addEventListener('blur', () => setTimeout(() => {
+      closeSugg();
+      const q = nameInp.value.trim();
+      if(q){
+        const m = fuzzy(q).find(x => normName(x.s.name) === normName(q));
+        if(m && r.lib !== m.si) pickLib(m.si);   // 输入了库中完整名称 → 自动绑定
+      }
+    }, 150));
+    nameInp.addEventListener('keydown', e => {
+      if(!sugg.classList.contains('open') || !curList.length) return;
+      if(e.key === 'ArrowDown'){ e.preventDefault(); hl = Math.min(hl + 1, curList.length - 1); }
+      else if(e.key === 'ArrowUp'){ e.preventDefault(); hl = Math.max(hl - 1, 0); }
+      else if(e.key === 'Enter'){ e.preventDefault(); if(hl >= 0) pickLib(curList[hl].si); else { closeSugg(); nameInp.blur(); } }
+      else if(e.key === 'Escape'){ closeSugg(); return; }
+      sugg.querySelectorAll('.it').forEach((el, k) => el.classList.toggle('hl', k === hl));
+    });
+
+    /* --- 其余字段 --- */
+    tr.querySelector('.rp-state').addEventListener('change', e => {
+      r.state = e.target.value;
+      if(r.state === 'liquid' && !isFinite(parseFloat(r.density))){ r.density = 1.0; r.purity = 100; }
+      if(r.state === 'solid' && r.unit === 'pctv') r.unit = 'mM';
+      renderRecipe(); saveAll();
+    });
+    ['mw','d','p','conc'].forEach(cls => {
+      const inp = tr.querySelector('.rp-' + cls);
+      inp.addEventListener('input', () => {
+        const key = {mw:'mw', d:'density', p:'purity', conc:'conc'}[cls];
+        r[key] = inp.value === '' ? null : parseFloat(inp.value);
+        if(r.lib >= 0 && key !== 'conc'){ r.lib = -1; } // 手改库参数 → 转自定义，避免被库覆盖
+        saveAll(); recalcRecipe();
+      });
+    });
+    tr.querySelector('.rp-unit').addEventListener('change', e => { r.unit = e.target.value; saveAll(); recalcRecipe(); });
+    tr.querySelector('td:last-child button').onclick = () => {
+      recipe.splice(i, 1); renderRecipe(); saveAll(); recalcRecipe();
+    };
+    tb.appendChild(tr);
+  });
+  recalcRecipe();
+}
+$('addRowBtn').onclick = () => {
+  recipe.push({lib:-1, name:'', state:'solid', mw:100, density:null, purity:100, conc:10, unit:'mM'});
+  renderRecipe(); saveAll();
+  const rows = $('recipeBody').querySelectorAll('tr');
+  rows[rows.length-1]?.querySelector('.rp-name')?.focus();
+};
+$('clearRecipe').onclick = () => {
+  if(!recipe.length || !confirm('清空全部配方行？')) return;
+  recipe = []; renderRecipe(); saveAll();
+};
+$('c_v').addEventListener('input', recalcRecipe);
+
+/* 单行用量计算：返回 {txt, g, mL, mmol, name, conc, unit} */
+function amountOf(r, V){
+  const mw = parseFloat(r.mw), conc = parseFloat(r.conc);
+  if(!isFinite(conc)) return {txt:'<span style="color:#8a97a5">填浓度</span>'};
+  let g = NaN, mol = NaN;
+  switch(r.unit){
+    case 'M':    mol = conc;      g = conc * mw * V; break;
+    case 'mM':   mol = conc/1000; g = conc/1000 * mw * V; break;
+    case 'gL':   g = conc * V;    mol = mw ? g/mw : NaN; break;
+    case 'mgmL': g = conc * V;    mol = mw ? g/mw : NaN; break;
+    case 'pct':  g = conc * 10 * V; mol = mw ? g/mw : NaN; break;
+    case 'pctv': {
+      const mL = conc/100 * V;
+      const d = parseFloat(r.density), p = (parseFloat(r.purity) || 100)/100;
+      const g2 = isFinite(d) ? mL * d * p : NaN;
+      mol = (mw && isFinite(g2)) ? g2/mw : NaN;
+      return {txt:`<b>${fmt(mL,2)} mL</b>${isFinite(mol)?` <span style="color:var(--sub);font-size:12px">≈ ${fmt(mol*1000,2)} mmol</span>`:''}`,
+              mL, mmol: mol*1000, name:r.name, conc, unit:UNIT_LABEL[r.unit]};
+    }
+  }
+  if(!isFinite(g)) return {txt:'<span style="color:#8a97a5">—</span>'};
+  const mmol = isFinite(mol) ? mol*1000 : NaN;
+  if(r.state === 'liquid'){
+    const d = parseFloat(r.density), p = (parseFloat(r.purity) || 100)/100;
+    if(!(d > 0)) return {txt:`${fmt(g,3)} g <span style="color:var(--warn-ink);font-size:12px">（缺密度）</span>`, g, mmol, name:r.name, conc, unit:UNIT_LABEL[r.unit]};
+    const mL = g / d / p;
+    return {txt:`<b>${fmt(mL,2)} mL</b> <span style="color:var(--sub);font-size:12px">（纯品 ${fmt(g,3)} g${isFinite(mmol)?`，${fmt(mmol,2)} mmol`:''}）</span>`,
+            mL, g, mmol, name:r.name, conc, unit:UNIT_LABEL[r.unit]};
+  }
+  return {txt:`<b>${fmt(g,3)} g</b>${isFinite(mmol)?` <span style="color:var(--sub);font-size:12px">（${fmt(mmol,2)} mmol）</span>`:''}`,
+          g, mmol, name:r.name, conc, unit:UNIT_LABEL[r.unit]};
+}
+
+let lastSummary = '';
+function recalcRecipe(){
+  const V = (parseFloat($('c_v').value) || 0)/1000;
+  const amts = recipe.map(r => amountOf(r, V));
+  [...$('recipeBody').querySelectorAll('.rp-amt')].forEach((td, i) => { td.innerHTML = amts[i]?.txt || ''; });
+  lastSummary = `【多组分配方】总体积 ${$('c_v').value} mL\n` + recipe.map((r, i) => {
+    const a = amts[i];
+    const label = (r.name || '').trim() || '未命名成分';
+    const amt = a?.mL != null ? `${fmt(a.mL,2)} mL` : (a?.g != null ? `${fmt(a.g,3)} g` : '—');
+    return `· ${label}：${r.conc ?? ''} ${UNIT_LABEL[r.unit] || ''} → ${amt}`;
+  }).join('\n') + '\n（估算值，定容后以实测为准）';
+}
+$('copyRecipe').onclick = () => {
+  navigator.clipboard.writeText(lastSummary).then(() => {
+    $('copied2').style.display = 'inline'; setTimeout(() => $('copied2').style.display = 'none', 1800);
+  });
+};
+renderLib(); renderRecipe();
+
+/* ---- 我的配方：保存 / 载入 / 删除 ---- */
+const SREC_KEY = 'buf_calc_recipes_v1';
+let savedRecipes = loadJSON(SREC_KEY, []);
+function saveSaved(){ try { localStorage.setItem(SREC_KEY, JSON.stringify(savedRecipes)); } catch(e){} }
+let expandedIdx = null;
+function renderSaved(){
+  const box = $('sr_list'); box.innerHTML = '';
+  $('sr_count').textContent = savedRecipes.length ? `已存 ${savedRecipes.length} 个` : '';
+  if(!savedRecipes.length){
+    expandedIdx = null;
+    box.innerHTML = '<div class="sr-empty">还没有保存的配方 —— 填好上方配方表后，命名即可保存，下次一键载入</div>';
+    return;
+  }
+  savedRecipes.forEach((sr, i) => {
+    const item = document.createElement('div');
+    item.className = 'sr-item' + (expandedIdx === i ? ' open' : '');
+    const div = document.createElement('div'); div.className = 'sr-row';
+    const nComp = sr.rows.length;
+    const meta = `${nComp} 种成分 · ${sr.v} mL · ${sr.date}`;
+    div.innerHTML = `
+      <span class="sr-caret">▶</span>
+      <span class="sr-name">${esc(sr.name)}</span>
+      <span class="sr-meta">${esc(meta)}</span>
+      <button class="btn" style="padding:4px 14px" title="载入到上方配方表">载入</button>
+      <button class="btn ghost" style="padding:4px 14px">打印</button>
+      <button class="btn ghost" style="padding:4px 14px">删</button>`;
+    const btns = div.querySelectorAll('button');
+    btns[0].onclick = () => {
+      recipe = JSON.parse(JSON.stringify(sr.rows));
+      $('c_v').value = sr.v;
+      syncRecipeFromLib();            // 与物质数据库同步，失效的库引用自动转自定义
+      renderRecipe(); saveAll();
+      window.scrollTo({top: $('recipeTable').getBoundingClientRect().top + window.scrollY - 20, behavior:'smooth'});
+    };
+    btns[1].onclick = () => printSavedRecipe(sr);
+    btns[2].onclick = () => {
+      if(!confirm(`删除配方「${sr.name}」？`)) return;
+      if(expandedIdx === i) expandedIdx = null; else if(expandedIdx > i) expandedIdx--;
+      savedRecipes.splice(i, 1); saveSaved(); renderSaved();
+    };
+    /* 点击行 → 展开/收起成分明细 + 体积编辑 */
+    div.addEventListener('click', e => {
+      if(e.target.closest('button')) return;
+      expandedIdx = (expandedIdx === i) ? null : i;
+      renderSaved();
+    });
+
+    const detail = document.createElement('div'); detail.className = 'sr-detail';
+    detail.innerHTML = `
+      <div class="sr-vol">
+        <label>配制体积 (mL)</label>
+        <input type="number" class="sr-v" step="0.1" min="0" value="${sr.v}">
+        <span class="sr-vol-note">修改后用量即时重算并自动保存</span>
+      </div>
+      <table class="sr-tbl">
+        <thead><tr><th>成分</th><th>形态</th><th>目标浓度</th><th style="min-width:160px">添加量</th></tr></thead>
+        <tbody></tbody>
+      </table>
+      ${nComp ? '' : '<div class="sr-empty">该配方为空</div>'}`;
+    const tbody = detail.querySelector('tbody');
+    const fill = () => {
+      const V = (parseFloat(detail.querySelector('.sr-v').value) || 0)/1000;
+      tbody.innerHTML = sr.rows.map(r => {
+        const a = amountOf(r, V);
+        return `<tr>
+          <td><b>${esc((r.name || '').trim()) || '—'}</b></td>
+          <td>${r.state === 'liquid' ? '液体' : '固体'}</td>
+          <td>${esc((r.conc ?? '') + ' ' + (UNIT_LABEL[r.unit] || ''))}</td>
+          <td class="num">${a?.txt || '—'}</td>
+        </tr>`;
+      }).join('');
+    };
+    fill();
+    const vInp = detail.querySelector('.sr-v');
+    vInp.addEventListener('input', () => { sr.v = vInp.value; fill(); });
+    vInp.addEventListener('change', () => { saveSaved(); div.querySelector('.sr-meta').textContent = `${nComp} 种成分 · ${sr.v} mL · ${sr.date}`; });
+
+    item.appendChild(div); item.appendChild(detail);
+    box.appendChild(item);
+  });
+}
+/* 生成并打印配方单 */
+function printSavedRecipe(sr){
+  const V = (parseFloat(sr.v) || 0)/1000;
+  let html = `
+    <div class="prt-head">
+      <h1>${esc(sr.name)}</h1>
+      <div class="prt-meta">配制体积 ${esc(String(sr.v))} mL · 保存日期 ${esc(sr.date)} · 打印时间 ${new Date().toLocaleString('zh-CN')}</div>
+    </div>
+    <table class="prt-table">
+      <thead><tr><th style="width:32px">#</th><th>成分</th><th>形态</th><th>目标浓度</th><th style="width:180px">添加量</th><th>摩尔质量 (g/mol)</th><th>密度 / 纯度</th></tr></thead>
+      <tbody>`;
+  sr.rows.forEach((r, i) => {
+    const a = amountOf(r, V);
+    const conc = (r.conc ?? '') + ' ' + (UNIT_LABEL[r.unit] || '');
+    html += `<tr>
+      <td>${i+1}</td>
+      <td><b>${esc((r.name || '').trim()) || '—'}</b></td>
+      <td>${r.state === 'liquid' ? '液体' : '固体'}</td>
+      <td>${esc(conc)}</td>
+      <td>${a?.txt || '—'}</td>
+      <td>${r.mw ?? '—'}</td>
+      <td>${r.state === 'liquid' ? `${r.density ?? '—'} g/mL / ${r.purity ?? '—'}%` : '—'}</td>
+    </tr>`;
+  });
+  html += `</tbody></table>
+    <div class="prt-note">添加量为估算值；配制时先以约 80% 体积的水溶解各成分，混匀后定容至 ${esc(String(sr.v))} mL，最终以 pH 计 / 浓度实测为准。生成于 Buffer 配方计算器。</div>`;
+  $('srPrintArea').innerHTML = html;
+  window.print();
+}
+$('sr_save').onclick = () => {
+  if(!recipe.length){ alert('当前配方行为空，没有可保存的内容'); return; }
+  const name = $('sr_name').value.trim() || `配方 ${new Date().toISOString().slice(0,10)}`;
+  const idx = savedRecipes.findIndex(x => normName(x.name) === normName(name));
+  if(idx >= 0 && !confirm(`已有同名配方「${name}」，覆盖它？`)) return;
+  const entry = {name, v: $('c_v').value, date: new Date().toISOString().slice(0,10),
+                 rows: JSON.parse(JSON.stringify(recipe))};
+  if(idx >= 0) savedRecipes[idx] = entry; else savedRecipes.unshift(entry);
+  saveSaved(); renderSaved();
+  $('sr_name').value = '';
+};
+renderSaved();
+
+/* ============ Tab3 pH 调节 ============ */
+function calcAdj(){
+  const c = parseFloat($('a_c').value)/1000, V = parseFloat($('a_v').value)/1000;
+  const pKa = parseFloat($('a_pka').value), p1 = parseFloat($('a_p1').value), p2 = parseFloat($('a_p2').value);
+  const nT = c*V;
+  const f1 = frac(p1,pKa).fBase, f2 = frac(p2,pKa).fBase;
+  const dn = nT*(f2-f1); // >0 需加碱
+  const tm = parseFloat($('a_tm').value);
+  const needBase = dn > 0;
+  const mmol = Math.abs(dn)*1000, mL = tm>0 ? Math.abs(dn)/tm*1000 : NaN;
+  const sel = $('a_titrant').value;
+  const mismatch = (needBase && sel==='acid') || (!needBase && sel==='base');
+  let html = `<div class="result-title">计算结果</div><table>
+    <tr><td>当前碱式摩尔分数</td><td class="num">${fmt(f1,4)}</td><td>目标碱式摩尔分数</td><td class="num">${fmt(f2,4)}</td></tr>
+    <tr><td>需转化的缓冲组分量</td><td class="num"><b>${fmt(mmol,2)} mmol</b></td>
+    <td>需加入</td><td class="num"><b>${fmt(mL,2)} mL ${needBase?'NaOH':'HCl'}（${tm} mol/L）</b></td></tr></table>`;
+  if(mismatch) html += `<div class="warn">⚠️ 当前选择的是 ${sel==='acid'?'HCl':'NaOH'}，但 pH 需要${needBase?'升':'降'}，方向相反——请切换试剂或检查 pH 输入。</div>`;
+  if(p2 < pKa-1 || p2 > pKa+1) html += `<div class="warn">⚠️ 目标 pH 距 pKa 超过 1，此浓度下缓冲容量不足，建议提高浓度或换缓冲体系。</div>`;
+  $('a_res').innerHTML = html;
+}
+['a_c','a_v','a_pka','a_p1','a_p2','a_titrant','a_tm'].forEach(id => $(id).addEventListener('input', calcAdj));
+calcAdj();
+
+/* ============ Tab4 稀释 ============ */
+function calcDil(){
+  const c1 = parseFloat($('d_c1').value), c2 = parseFloat($('d_c2').value), v2 = parseFloat($('d_v2').value);
+  const v1 = c2>0 ? c1*v2/c2 : NaN;
+  $('d_res').innerHTML = `<div class="result-title">计算结果</div><table>
+    <tr><td>需取储备液 V₁</td><td class="num"><b>${isFinite(v1)?fmt(v1,2):'—'} mL</b></td>
+    <td>补加水定容至</td><td class="num">${fmt(v2,2)} mL（加水 ≈ ${isFinite(v1)?fmt(v2-v1,2):'—'} mL）</td></tr></table>`;
+}
+['d_c1','d_c2','d_v2'].forEach(id => $(id).addEventListener('input', calcDil));
+calcDil();
+</script>
+</body>
+</html>

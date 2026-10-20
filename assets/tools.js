@@ -27,6 +27,15 @@ const TOOLS = [
     icon: "flask",
     status: "live",
     tags: ["8 参数", "打分排序", "Excel 粘贴"]
+  },
+  {
+    id: "buffer-calculator",
+    name: "Buffer 配方计算器",
+    desc: "10 种常用缓冲体系配方（HH 方程 + 温度校正 pKa）、多组分添加量（物质数据库 + 模糊匹配）、pH 调节与稀释计算，支持配方保存与打印。",
+    href: "tools/buffer-calculator.html",
+    icon: "calc",
+    status: "live",
+    tags: ["配方计算", "物质数据库", "模糊匹配", "打印配方单"]
   }
 ];
 
