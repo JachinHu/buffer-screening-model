@@ -2,7 +2,9 @@
 
 基于 Panta 蛋白稳定性分析仪输出的 **8 项检测参数**，对候选 buffer 配方加权打分排序，用于在冻融实测前把候选集压缩到 3–4 个。
 
-在线使用：部署后的 GitHub Pages 首页即为工具入口。
+**在线工具：https://jachinhu.github.io/buffer-screening-model/**
+
+仓库：https://github.com/JachinHu/buffer-screening-model
 
 ## 模型结构
 
@@ -68,3 +70,17 @@ python scripts/final_weights.py
 ## 下一步
 
 现有 8 项参数的信息量已接近上限。要提升 Top3 命中率，需补表面性质维度：ζ 电位、疏水性（HIC 相对保留）、SEC 聚集体%、DLS 计数率。`scripts/extend_study.py` 已内置三条纳入判据，补测数据填入扩展模板后直接运行即可判定「进权重 / 进红旗 / 弃用」。
+
+## 更新线上版本
+
+站点由 `main` 分支根目录直接发布（`.nojekyll` 已关闭 Jekyll 处理）。
+
+```bash
+# 常规网络，直接推送
+git add -A && git commit -m "更新说明" && git push
+
+# 若 git 协议被网络/代理拦截（github.com:443 不通），走 REST API 提交
+GITHUB_TOKEN=xxx python scripts/push_via_api.py JachinHu/buffer-screening-model
+```
+
+首次建仓库+开 Pages 用 `scripts/deploy_github.py`。
