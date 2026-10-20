@@ -52,13 +52,12 @@ def collect(root="."):
     for dirpath, dirnames, filenames in os.walk(root):
         dirnames[:] = [d for d in dirnames if d not in SKIP_DIRS]
         for fn in filenames:
-            if fn.startswith(SKIP_PREFIX) and fn != ".gitignore":
+            rel = os.path.relpath(os.path.join(dirpath, fn), root).replace("\\", "/")
+            if fn.startswith(SKIP_PREFIX) and fn != ".gitignore" and rel != "tools/_template.html":
                 continue
             if fn.endswith(SKIP_SUFFIX):
                 continue
-            full = os.path.join(dirpath, fn)
-            rel = os.path.relpath(full, root).replace("\\", "/")
-            files.append((rel, full))
+            files.append((rel, os.path.join(dirpath, fn)))
     return sorted(files)
 
 
@@ -103,7 +102,7 @@ def main():
     parents = [ref["object"]["sha"]] if status == 200 else []
 
     _, commit = call("POST", f"/repos/{slug}/git/commits", {
-        "message": "Buffer 快速筛选模型：8 参数权重打分工具与标定数据",
+        "message": os.environ.get("COMMIT_MSG", "更新站点内容"),
         "tree": new_tree["sha"],
         "parents": parents,
     }, allow=())

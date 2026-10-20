@@ -3,131 +3,80 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Buffer 快速筛选 · 8 参数权重模型</title>
-<style>
-  :root{
-    --bg:#f5f6f8; --card:#fff;
-    --ink:#151a24; --ink2:#3f4756; --muted:#8b93a3;
-    --line:#e5e8ee; --line2:#f0f2f6;
-    --accent:#2f57d9; --accent-soft:#eef2fd;
-  }
-  *{margin:0;padding:0;box-sizing:border-box}
-  body{
-    font-family:"Segoe UI","Microsoft YaHei",system-ui,sans-serif;
-    background:var(--bg); color:var(--ink);
-    font-size:14px; line-height:1.6;
-    -webkit-font-smoothing:antialiased;
-    min-height:100vh; display:flex; flex-direction:column;
-  }
-  .num{font-variant-numeric:tabular-nums}
-  .top{background:var(--card);border-bottom:1px solid var(--line)}
-  .top .inner{max-width:940px;margin:0 auto;padding:26px 24px 24px}
-  .mark{display:flex;align-items:center;gap:8px;font-size:10.5px;letter-spacing:.14em;
-        text-transform:uppercase;color:var(--muted)}
-  .mark i{width:7px;height:7px;border-radius:2px;background:var(--accent);display:block}
-  h1{font-size:23px;font-weight:650;letter-spacing:-.3px;margin-top:10px}
-  .lead{font-size:13px;color:var(--ink2);margin-top:8px;max-width:700px}
-  .chips{display:flex;gap:26px;margin-top:18px;flex-wrap:wrap}
-  .chip{display:flex;align-items:baseline;gap:6px;font-size:11.5px;color:var(--muted)}
-  .chip b{font-size:15px;font-weight:650;color:var(--ink);letter-spacing:-.2px}
-
-  .shell{max-width:940px;width:100%;margin:0 auto;padding:22px 24px 56px;flex:1}
-
-  .hero{
-    display:block; text-decoration:none; color:inherit;
-    background:var(--card); border:1px solid var(--line); border-radius:14px;
-    padding:22px 24px; transition:.18s; position:relative;
-  }
-  .hero:hover{border-color:#c9d3ec; box-shadow:0 4px 20px rgba(47,87,217,.07); transform:translateY(-1px)}
-  .hero .eyebrow{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
-  .hero h2{font-size:16.5px;font-weight:650;margin-top:7px;letter-spacing:-.1px}
-  .hero p{font-size:12.5px;color:var(--ink2);margin-top:8px;max-width:600px}
-  .hero .go{
-    display:inline-flex; align-items:center; gap:7px; margin-top:16px;
-    background:var(--accent); color:#fff; font-size:12.5px; font-weight:600;
-    padding:8px 16px; border-radius:7px;
-  }
-  .hero:hover .go{opacity:.93}
-  .hero .go svg{width:13px;height:13px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-
-  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:14px}
-  @media(max-width:760px){ .grid{grid-template-columns:1fr} .chips{gap:18px} }
-  a.card{
-    display:block; text-decoration:none; color:inherit;
-    background:var(--card); border:1px solid var(--line); border-radius:12px;
-    padding:16px 18px; transition:.18s;
-  }
-  a.card:hover{border-color:#c9d3ec; box-shadow:0 3px 14px rgba(47,87,217,.06)}
-  a.card .t{font-size:13px;font-weight:600}
-  a.card .d{font-size:11.5px;color:var(--muted);margin-top:5px;line-height:1.65}
-
-  .note{
-    background:var(--card); border:1px solid var(--line); border-radius:12px;
-    padding:16px 18px; margin-top:14px; font-size:11.5px; color:var(--ink2); line-height:1.85;
-  }
-  .note b{font-weight:600;color:var(--ink)}
-  .note .hd{font-size:12px;font-weight:650;color:var(--ink);margin-bottom:7px}
-
-  footer{
-    max-width:940px;margin:0 auto;padding:0 24px 34px;
-    font-size:11px;color:var(--muted);line-height:1.9;
-  }
-</style>
+<title>实验室工具集 · Panta</title>
+<meta name="description" content="蛋白稳定性与 buffer 配方相关的小工具集合：快速筛选、趋势看板、参数探索。">
+<link rel="stylesheet" href="assets/site.css">
 </head>
 <body>
 
 <div class="top">
   <div class="inner">
-    <div class="mark"><i></i>Panta · Protein Stability</div>
-    <h1>Buffer 快速筛选模型</h1>
-    <div class="lead">基于 Panta 蛋白稳定性分析仪 8 项检测参数，按权重打分对候选 buffer 排序，挑出前几名进入冻融实测。</div>
+    <div class="mark"><i></i>Panta · Lab Tools</div>
+    <h1>实验室工具集</h1>
+    <div class="lead">围绕蛋白稳定性与 buffer 配方的小工具。全部纯前端运行，数据不上传，打开即用。</div>
     <div class="chips">
-      <span class="chip"><b>8</b>检测参数</span>
-      <span class="chip"><b>23</b>标定样本</span>
-      <span class="chip">ρ <b class="num">0.70 / 0.64</b>轮内排序相关</span>
-      <span class="chip">权重 <b>100%</b>可调</span>
+      <span class="chip"><b id="cntS1">1</b> 可用工具</span>
+      <span class="chip"><b>23</b> 标定样本</span>
+      <span class="chip">排序 ρ <b class="num">0.70 / 0.64</b></span>
+      <span class="chip"><b>0</b> 依赖 · 纯静态</span>
     </div>
   </div>
 </div>
 
 <div class="shell">
 
-  <a class="hero" href="./Buffer%E5%BF%AB%E9%80%9F%E7%AD%9B%E9%80%89%E5%B7%A5%E5%85%B7.html">
-    <div class="eyebrow">Interactive Tool</div>
-    <h2>打开 Buffer 快速筛选工具</h2>
-    <p>调整 8 个参数权重 → 粘贴 Excel 候选数据 → 即时得到排名与送测建议。纯前端运行，数据不上传。</p>
-    <span class="go">进入工具
-      <svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
-    </span>
-  </a>
-
-  <div class="grid">
-    <a class="card" href="./%E5%88%86%E6%9E%90%E6%8A%A5%E5%91%8A.md">
-      <div class="t">分析报告</div>
-      <div class="d">权重依据、验证方法与能力边界</div>
-    </a>
-    <a class="card" href="./data/buffer_screening.csv">
-      <div class="t">标定数据</div>
-      <div class="d">两轮筛选 23 个样本的完整参数表</div>
-    </a>
-    <a class="card" href="./model/eight_param_model.json">
-      <div class="t">模型参数</div>
-      <div class="d">权重、规则层参数与验证指标（JSON）</div>
-    </a>
+  <div class="search">
+    <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4 4"/></svg>
+    <input id="q" type="text" placeholder="搜索工具、参数或标签…" autocomplete="off" aria-label="搜索工具">
+    <button class="clr" id="clr" aria-label="清空" style="display:none">×</button>
+    <kbd>/</kbd>
   </div>
 
+  <div id="sectLive">
+    <div class="sect-hd">
+      <h2>工具</h2>
+      <span class="cnt" id="cntLive">1 个</span>
+      <span class="line"></span>
+    </div>
+    <div class="grid" id="gridLive"></div>
+  </div>
+
+  <div id="sectSoon" style="margin-top:30px">
+    <div class="sect-hd">
+      <h2>规划中</h2>
+      <span class="cnt" id="cntSoon">3 个</span>
+      <span class="line"></span>
+    </div>
+    <div class="grid" id="gridSoon"></div>
+  </div>
+
+  <div class="empty-result" id="noResult" style="display:none">
+    没有匹配的工具。<b>换个关键词</b>，或直接打开 Buffer 快速筛选。
+  </div>
+
+  <div class="sect-hd" style="margin-top:34px">
+    <h2>资料</h2>
+    <span class="line"></span>
+  </div>
+  <div class="docs" id="docList"></div>
+
   <div class="note">
-    <div class="hd">使用前提</div>
-    权重为物理方向锁定 + 结构消融定幅度的结果，非自由拟合（n=23 时 8 个自由权重不可识别）。<br>
-    工具定位是<b>粗筛</b>：用于淘汰明显高风险的配方、把候选压缩到 3–4 个送测，不替代实测。<br>
-    排序相关 ρ ≈ 0.7，Top3 命中率约 1/3–2/3，因此建议取前 3–4 名<b>全部进入冻融实测</b>。
+    <div class="hd">新增工具 <span class="k">assets/tools.js</span></div>
+    页面放进 <code>tools/</code>，在 <code>TOOLS</code> 数组里加一条记录，首页自动出现新卡片 —— 不需要改 HTML。<br>
+    工具页顶部加一条返回导航即可与工具集打通，参考 <code>tools/buffer-screening.html</code> 的 <code>.toolbar</code>。<br>
+    共享样式在 <code>assets/site.css</code>（颜色、字号、卡片、标签），新页面直接引用可保持视觉一致。
   </div>
 
 </div>
 
 <footer>
-  标定目标 = 冻融 3 次后的综合非特异性 &nbsp;·&nbsp; 复现脚本见 scripts/ &nbsp;·&nbsp; 2026-10
+  <span>Panta · 蛋白稳定性工具集</span>
+  <span class="sep">/</span>
+  <span>2026-10</span>
+  <span class="sep">/</span>
+  <a href="https://github.com/JachinHu/buffer-screening-model">GitHub 仓库</a>
 </footer>
 
+<script src="assets/tools.js"></script>
 </body>
 </html>

@@ -10,6 +10,8 @@ sim*.js
 _*.png
 _*.html
 _*.csv
+# 工具模板需要发布
+!tools/_template.html
 *.log
 .DS_Store
 Thumbs.db

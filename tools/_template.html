@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>新工具 · 实验室工具集</title>
+<!-- 共享样式：颜色、字号、卡片、标签都在这里 -->
+<link rel="stylesheet" href="../assets/site.css">
+<style>
+  /* 只写本工具独有的样式 */
+  .top .inner{max-width:1180px;margin:0 auto;padding:22px 24px 20px}
+  .shell{max-width:1180px;margin:0 auto;padding:20px 24px 60px;display:flex;flex-direction:column;gap:18px}
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:20px 22px}
+  .hd{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
+  .hd h2{font-size:13.5px;font-weight:650}
+  .hd .sub{font-size:11.5px;color:var(--muted)}
+</style>
+</head>
+<body>
+
+<!-- 返回条：所有工具页都保留这一段，只改 crumb 里的工具名 -->
+<div class="toolbar">
+  <div class="inner">
+    <a class="back" href="../index.html">
+      <svg viewBox="0 0 24 24"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>
+      工具集
+    </a>
+    <span class="crumb">实验室工具集 / <b>新工具名称</b></span>
+    <span class="right"><i></i>纯前端 · 数据不上传</span>
+  </div>
+</div>
+
+<div class="top">
+  <div class="inner">
+    <div class="mark"><i></i>Panta · New Tool</div>
+    <h1>新工具名称</h1>
+    <div class="lead">一句话说明这个工具解决什么问题、输入什么、输出什么。</div>
+    <div class="chips">
+      <span class="chip"><b>—</b>主要指标</span>
+      <span class="chip">本地运行</span>
+    </div>
+  </div>
+</div>
+
+<div class="shell">
+
+  <section class="panel">
+    <div class="hd">
+      <h2>输入</h2>
+      <span class="sub">在这里放表单 / 表格 / 粘贴区</span>
+    </div>
+    <!-- 内容 -->
+  </section>
+
+  <section class="panel">
+    <div class="hd">
+      <h2>结果</h2>
+      <span class="sub">在这里放输出</span>
+    </div>
+    <!-- 内容 -->
+  </section>
+
+</div>
+
+<footer>
+  <span>Panta · 蛋白稳定性工具集</span>
+  <span class="sep">/</span>
+  <a href="../index.html">工具集首页</a>
+</footer>
+
+<script>
+/* 逻辑写在这里；不引外部依赖，保持单页可离线打开 */
+</script>
+</body>
+</html>

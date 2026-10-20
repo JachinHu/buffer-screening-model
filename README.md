@@ -1,10 +1,23 @@
-# Buffer 快速筛选模型
+# 实验室工具集（Panta）
 
-基于 Panta 蛋白稳定性分析仪输出的 **8 项检测参数**，对候选 buffer 配方加权打分排序，用于在冻融实测前把候选集压缩到 3–4 个。
+围绕蛋白稳定性与 buffer 配方的纯前端小工具集合。首页是工具目录，每个工具是 `tools/` 下的独立单页，互不依赖。
 
-**在线工具：https://jachinhu.github.io/buffer-screening-model/**
+**在线站点：https://jachinhu.github.io/buffer-screening-model/**
 
 仓库：https://github.com/JachinHu/buffer-screening-model
+
+## 工具
+
+| 工具 | 路径 | 状态 |
+|---|---|---|
+| Buffer 快速筛选 | `tools/buffer-screening.html` | 可用 |
+| 非特异性趋势看板 | — | 规划中 |
+| 参数相关性探索 | — | 规划中 |
+| 配方浓度换算 | — | 规划中 |
+
+### Buffer 快速筛选
+
+基于 Panta 蛋白稳定性分析仪输出的 **8 项检测参数**，对候选 buffer 配方加权打分排序，用于在冻融实测前把候选集压缩到 3–4 个。
 
 ## 模型结构
 
@@ -47,8 +60,12 @@
 ## 文件
 
 ```
-index.html                     入口页
-Buffer快速筛选工具.html          交互式筛选工具（单文件，纯前端）
+index.html                     工具集首页（目录 + 搜索，卡片由注册表渲染）
+assets/site.css                共享样式：配色、字号、卡片、标签、工具页返回条
+assets/tools.js                工具注册表 TOOLS[]，新增工具只改这里
+tools/buffer-screening.html    Buffer 快速筛选（单文件，纯前端，可离线打开）
+tools/_template.html           新工具模板：返回条 + 页面骨架
+Buffer快速筛选工具.html          旧地址，自动跳转到 tools/
 分析报告.md                     权重依据、验证过程、结论
 data/buffer_screening.csv      两轮标定数据（n=23）
 data/buffer_screening_extended.csv  扩展模板（表面性质指标待补测）
@@ -57,6 +74,27 @@ scripts/final_weights.py       权重标定与嵌套留一验证
 scripts/eight_param_model.py   权重消融与结构搜索
 scripts/extend_study.py        bridge study：新指标纳入判据评估
 ```
+
+## 新增一个工具
+
+1. 复制 `tools/_template.html` 为 `tools/<id>.html`，改标题、正文，逻辑写在页内 `<script>`；顶部 `.toolbar` 保留（只改 crumb 里的工具名）。
+2. 在 `assets/tools.js` 的 `TOOLS` 数组里加一条：
+
+```js
+{
+  id: "buffer-calc",
+  name: "配方浓度换算",
+  desc: "母液体积、终浓度、盐浓度与渗透压估算。",
+  href: "tools/buffer-calc.html",
+  icon: "calc",                 // flask | chart | book | sliders | grid | calc | clock
+  status: "live",               // live 可用 / beta 试用 / soon 规划中（soon 不可点击）
+  tags: ["配液", "单位换算"]
+}
+```
+
+3. 提交推送，首页自动出现卡片。HTML 不用改，`counts`、搜索索引、排序都会跟着更新。
+
+样式统一引用 `assets/site.css` 里的变量（`--accent`、`--line`、`--muted`…），不要另起一套配色。
 
 ## 复现
 
