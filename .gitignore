@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# 临时文件
+chk*.js
+sim*.js
+_*.png
+_*.html
+_*.csv
+*.log
+.DS_Store
+Thumbs.db
